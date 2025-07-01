@@ -48,6 +48,7 @@ public class SubredditService {
         ).collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public SubredditResponse getSubredditByName(String name) {
         Subreddit subreddit = subredditRepository.findByName(name)
                 .orElseThrow(() -> new RuntimeException("Subreddit not found"));
