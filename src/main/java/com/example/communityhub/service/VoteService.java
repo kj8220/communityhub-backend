@@ -5,6 +5,7 @@ import com.example.communityhub.entity.Post;
 import com.example.communityhub.entity.User;
 import com.example.communityhub.entity.Vote;
 import com.example.communityhub.enums.VoteType;
+import com.example.communityhub.exception.*;
 import com.example.communityhub.repository.PostRepository;
 import com.example.communityhub.repository.UserRepository;
 import com.example.communityhub.repository.VoteRepository;
@@ -25,14 +26,14 @@ public class VoteService {
     @Transactional
     public void vote(VoteRequest voteRequest, String username) {
         Post post = postRepository.findById(voteRequest.getPostId())
-                .orElseThrow(() -> new RuntimeException("Post not found"));
+                .orElseThrow(() -> new PostNotFoundException("Post not found"));
 
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
 
         boolean alreadyVoted = voteRepository.existsByPostAndUserAndVoteType(post, user, voteRequest.getVoteType());
         if (alreadyVoted) {
-            throw new RuntimeException("You already " + voteRequest.getVoteType().name().toLowerCase() + "d this post");
+            throw new AlreadyVotedException("You already " + voteRequest.getVoteType().name().toLowerCase() + "d this post");
         }
 
         Vote vote = Vote.builder()
