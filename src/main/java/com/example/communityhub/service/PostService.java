@@ -2,9 +2,11 @@ package com.example.communityhub.service;
 
 import com.example.communityhub.dto.CreatePostRequest;
 import com.example.communityhub.dto.GetPostResponse;
+import com.example.communityhub.entity.PollOption;
 import com.example.communityhub.entity.Post;
 import com.example.communityhub.entity.Subreddit;
 import com.example.communityhub.entity.User;
+import com.example.communityhub.enums.PostType;
 import com.example.communityhub.exception.DuplicatePostException;
 import com.example.communityhub.repository.PostRepository;
 import com.example.communityhub.repository.SubredditRepository;
@@ -12,6 +14,7 @@ import com.example.communityhub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,36 +27,66 @@ public class PostService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final SubredditRepository subredditRepository;
+    private final FileStorageService fileStorageService;
+
 
     @Transactional
-    public void createPost(CreatePostRequest request, String username) {
+    public void createPost(CreatePostRequest request, MultipartFile file, String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         Subreddit subreddit = subredditRepository.findByName(request.getSubredditName())
-                .orElseGet(() -> subredditRepository.findByName("general")
-                        .orElseThrow(() -> new RuntimeException("Default subreddit not found")));
+                .orElseThrow(() -> new RuntimeException("Subreddit not found"));
 
-        boolean exists = postRepository.existsByTitleAndContentAndUserAndSubreddit(
-                request.getTitle(),
-                request.getContent(),
-                user,
-                subreddit
-        );
-
-        if (exists) {
-            throw new DuplicatePostException("You already posted the same content in this subreddit");
-        }
-
-        Post post = Post.builder()
+        Post.PostBuilder postBuilder = Post.builder()
                 .title(request.getTitle())
-                .content(request.getContent())
-                .url(request.getUrl())
                 .created(LocalDateTime.now())
                 .voteCount(0)
                 .user(user)
                 .subreddit(subreddit)
-                .build();
+                .postType(request.getPostType());
+
+        switch (request.getPostType()) {
+            case IMAGE:
+            case VIDEO:
+                if (file == null || file.isEmpty()) {
+                    throw new IllegalArgumentException("Image/Video file is required for this post type.");
+                }
+
+                String fileUrl = fileStorageService.store(file);
+                postBuilder.url(fileUrl);
+                postBuilder.content(request.getContent()); 
+                break;
+
+            case POLL:
+                if (request.getPollOptions() == null || request.getPollOptions().size() < 2) {
+                    throw new IllegalArgumentException("A poll must have at least two options.");
+                }
+
+                postBuilder.content(request.getContent());
+                break;
+
+            case TEXT:
+            default:
+                if (request.getContent() == null || request.getContent().isBlank()) {
+                    throw new IllegalArgumentException("Content is required for a text post.");
+                }
+                postBuilder.content(request.getContent());
+                break;
+        }
+
+        Post post = postBuilder.build();
+
+        if (request.getPostType() == PostType.POLL) {
+            List<PollOption> options = request.getPollOptions().stream()
+                    .map(optionText -> {
+                        PollOption pollOption = new PollOption();
+                        pollOption.setText(optionText);
+                        pollOption.setPost(post); 
+                        return pollOption;
+                    }).collect(Collectors.toList());
+            post.setPollOptions(options);
+        }
 
         postRepository.save(post);
     }

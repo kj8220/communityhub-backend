@@ -3,6 +3,10 @@ package com.example.communityhub.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.example.communityhub.enums.PostType;
 
 @Entity
 @Table(name = "post")
@@ -35,4 +39,10 @@ public class Post {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subreddit_id", nullable = false)
     private Subreddit subreddit;
+
+    @Enumerated(EnumType.STRING)
+    private PostType postType;
+    
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PollOption> pollOptions = new ArrayList<>();
 }

@@ -30,6 +30,7 @@ public class SubredditService {
                 .description(request.getDescription())
                 .created(LocalDateTime.now())
                 .user(user)
+                .subredditType(request.getSubredditType())
                 .build();
 
         subredditRepository.save(subreddit);

@@ -84,7 +84,11 @@
     <artifactId>jaxb-api</artifactId>
     <version>2.3.1</version>
 </dependency>
-
+<dependency>
+    <groupId>com.amazonaws</groupId>
+    <artifactId>aws-java-sdk-s3</artifactId>
+    <version>1.12.747</version>
+     </dependency>
 
 	</dependencies>
 

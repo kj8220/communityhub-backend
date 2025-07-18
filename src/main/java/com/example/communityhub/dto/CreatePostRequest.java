@@ -1,7 +1,13 @@
 package com.example.communityhub.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.List;
+
+import com.example.communityhub.enums.PostType;
 
 @Data
 @NoArgsConstructor
@@ -11,10 +17,11 @@ public class CreatePostRequest {
     @NotBlank(message = "Title cannot be empty")
     private String title;
 
-    @NotBlank(message = "Content cannot be empty")
     private String content;
 
-    private String url;  // Optional field
+    private String subredditName;
 
-    private String subredditName; // From dropdown or default 'general'
+    private PostType postType;
+
+    private List<String> pollOptions;
 }

@@ -5,6 +5,8 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.example.communityhub.enums.SubredditType;
+
 @Entity
 @Table(name = "subreddit")
 @Data
@@ -30,4 +32,7 @@ public class Subreddit {
 
     @OneToMany(mappedBy = "subreddit", cascade = CascadeType.ALL)
     private List<Post> posts;
+    
+    @Enumerated(EnumType.STRING) 
+    private SubredditType subredditType;
 }
